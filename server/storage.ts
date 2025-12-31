@@ -136,32 +136,37 @@ export class DatabaseStorage implements IStorage {
     // Approve logic
     const userId = tx.userId;
     const amount = Number(tx.amount);
-    const balance = await this.getUserBalance(userId);
+    
+    // Use a transaction to ensure atomicity
+    await db.transaction(async (tx_db) => {
+      const [balance] = await tx_db.select().from(userBalances).where(eq(userBalances.userId, userId));
+      if (!balance) throw new Error("Balance not found");
 
-    if (tx.type === 'deposit') {
-      const history = await this.getTransactionHistory(userId);
-      const isFirstDeposit = !history.some(h => h.type === 'deposit' && h.status === 'completed');
-      const bonus = isFirstDeposit ? amount * 0.40 : 0;
+      if (tx.type === 'deposit') {
+        const history = await tx_db.select().from(transactions).where(and(eq(transactions.userId, userId), eq(transactions.type, 'deposit'), eq(transactions.status, 'completed')));
+        const isFirstDeposit = history.length === 0;
+        const bonus = isFirstDeposit ? amount * 0.40 : 0;
 
-      await db.update(userBalances).set({
-        mainBalance: (Number(balance.mainBalance) + amount).toString(),
-        lockedBonus: (Number(balance.lockedBonus) + bonus).toString(),
-      }).where(eq(userBalances.userId, userId));
-    } else if (tx.type === 'withdrawal') {
-      let rem = amount;
-      let qE = Number(balance.questEarnings);
-      let mB = Number(balance.mainBalance);
-      
-      if (qE >= rem) { qE -= rem; rem = 0; }
-      else { rem -= qE; qE = 0; mB -= rem; }
+        await tx_db.update(userBalances).set({
+          mainBalance: (Number(balance.mainBalance) + amount).toString(),
+          lockedBonus: (Number(balance.lockedBonus) + bonus).toString(),
+        }).where(eq(userBalances.userId, userId));
+      } else if (tx.type === 'withdrawal') {
+        let rem = amount;
+        let qE = Number(balance.questEarnings);
+        let mB = Number(balance.mainBalance);
+        
+        if (qE >= rem) { qE -= rem; rem = 0; }
+        else { rem -= qE; qE = 0; mB -= rem; }
 
-      await db.update(userBalances).set({
-        mainBalance: mB.toString(),
-        questEarnings: qE.toString(),
-      }).where(eq(userBalances.userId, userId));
-    }
+        await tx_db.update(userBalances).set({
+          mainBalance: mB.toString(),
+          questEarnings: qE.toString(),
+        }).where(eq(userBalances.userId, userId));
+      }
 
-    await db.update(transactions).set({ status: 'completed' }).where(eq(transactions.id, txId));
+      await tx_db.update(transactions).set({ status: 'completed' }).where(eq(transactions.id, txId));
+    });
   }
 
   async getUserQuests(userId: string): Promise<Quest[]> {

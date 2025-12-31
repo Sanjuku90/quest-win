@@ -141,7 +141,7 @@ export async function registerRoutes(
     const { action } = api.admin.approveTransaction.input.parse(req.body);
     
     try {
-      await storage.handleTransactionApproval(txId, action);
+      await storage.handleTransactionApproval(txId, action as "approve" | "reject");
       res.json({ success: true });
     } catch (error: any) {
       if (error.message === "Transaction not found") return res.status(404).json({ message: "Not found" });
