@@ -46,6 +46,12 @@ export const transactions = sqliteTable("transactions", {
   createdAt: integer("created_at", { mode: 'timestamp' }).default(new Date()),
 });
 
+export const sessions = sqliteTable("sessions", {
+  sid: text("sid").primaryKey(),
+  sess: text("sess").notNull(),
+  expire: integer("expire", { mode: 'timestamp' }).notNull(),
+});
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   balance: one(userBalances, {
     fields: [users.id],

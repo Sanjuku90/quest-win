@@ -2,26 +2,66 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
-import connectSqlite from "connect-sqlite3";
 import { authStorage } from "./storage";
+import { db } from "../../db";
+import { sessions } from "@shared/schema";
+import { eq, lt } from "drizzle-orm";
+
+class DrizzleStore extends session.Store {
+  async get(sid: string, callback: (err: any, session?: any) => void) {
+    try {
+      const [session] = await db.select().from(sessions).where(eq(sessions.sid, sid));
+      if (!session) return callback(null, null);
+      if (session.expire < new Date()) {
+        await this.destroy(sid, () => {});
+        return callback(null, null);
+      }
+      callback(null, JSON.parse(session.sess));
+    } catch (err) {
+      callback(err);
+    }
+  }
+
+  async set(sid: string, sess: any, callback?: (err?: any) => void) {
+    try {
+      const expire = sess.cookie.expires ? new Date(sess.cookie.expires) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const sessionData = {
+        sid,
+        sess: JSON.stringify(sess),
+        expire,
+      };
+      const [existing] = await db.select().from(sessions).where(eq(sessions.sid, sid));
+      if (existing) {
+        await db.update(sessions).set(sessionData).where(eq(sessions.sid, sid));
+      } else {
+        await db.insert(sessions).values(sessionData);
+      }
+      if (callback) callback();
+    } catch (err) {
+      if (callback) callback(err);
+    }
+  }
+
+  async destroy(sid: string, callback?: (err?: any) => void) {
+    try {
+      await db.delete(sessions).where(eq(sessions.sid, sid));
+      if (callback) callback();
+    } catch (err) {
+      if (callback) callback(err);
+    }
+  }
+}
 
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const SQLiteStore = connectSqlite(session);
-  const sessionStore = new SQLiteStore({
-    db: "sqlite.db",
-    dir: ".",
-    table: "sessions",
-    concurrentDB: true
-  });
+  const sessionTtl = 7 * 24 * 60 * 60 * 1000;
   return session({
-    secret: process.env.SESSION_SECRET!,
-    store: sessionStore,
+    secret: process.env.SESSION_SECRET || "default_secret",
+    store: new DrizzleStore(),
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Set to false for local dev if not using HTTPS
+      secure: false,
       maxAge: sessionTtl,
     },
   });
@@ -72,6 +112,7 @@ export async function setupAuth(app: Express) {
         email,
         password,
         username,
+        id: crypto.randomUUID(),
       });
       req.login(user, (err) => {
         if (err) return res.status(500).json({ message: "Login failed" });
