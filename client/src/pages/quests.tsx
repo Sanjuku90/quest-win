@@ -23,10 +23,10 @@ export default function Quests() {
             <div className="p-3 bg-primary/10 rounded-xl text-primary">
               <Target className="w-8 h-8" />
             </div>
-            <h1 className="text-3xl font-display font-bold">Daily Quests</h1>
+            <h1 className="text-3xl font-display font-bold text-white">Quêtes Quotidiennes</h1>
           </div>
           <p className="text-muted-foreground ml-14">
-            Complete tasks to earn real rewards. Resets daily at midnight.
+            Complétez ces tâches pour gagner 20% de votre solde d'investissement par quête. Réinitialisation à minuit.
           </p>
         </div>
 

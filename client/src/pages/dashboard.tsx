@@ -79,10 +79,10 @@ export default function Dashboard() {
             transition={{ delay: 0.3 }}
           >
             <StatCard
-              title="Quest Earnings"
+              title="Gains de Quêtes"
               value={`$${dashboard?.balance.questEarnings}`}
               icon={Trophy}
-              trend={`${dashboard?.completedQuestsCount}/${dashboard?.totalQuestsCount} Quests Done`}
+              trend={`${dashboard?.completedQuestsCount}/${dashboard?.totalQuestsCount} Quêtes terminées`}
             />
           </motion.div>
 

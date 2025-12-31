@@ -56,7 +56,7 @@ export class DatabaseStorage implements IStorage {
         mainBalance: "0",
         lockedBonus: "0",
         questEarnings: "0",
-        investmentTier: 0,
+        investmentTier: "0",
         role: "user",
       }).returning();
       balance = newBalance;
@@ -171,16 +171,26 @@ export class DatabaseStorage implements IStorage {
 
   async completeQuest(userId: string, questId: number): Promise<Quest> {
     const balance = await this.getUserBalance(userId);
-    if (Number(balance.mainBalance) <= 0) {
-      throw new Error("Investment required to complete quests");
+    const mainBalance = Number(balance.mainBalance);
+    
+    if (mainBalance <= 0) {
+      throw new Error("Un investissement est requis pour valider les quêtes.");
     }
 
     const [quest] = await db.select().from(quests).where(and(eq(quests.id, questId), eq(quests.userId, userId)));
-    if (!quest || quest.isCompleted) throw new Error("Quest not found or completed");
+    if (!quest || quest.isCompleted) throw new Error("Quête non trouvée ou déjà complétée");
 
-    const [updated] = await db.update(quests).set({ isCompleted: true, completedAt: new Date() }).where(eq(quests.id, questId)).returning();
+    // Chaque quête rapporte 20% du solde d'investissement (mainBalance)
+    const rewardAmount = mainBalance * 0.20;
+
+    const [updated] = await db.update(quests).set({ 
+      isCompleted: true, 
+      completedAt: new Date(),
+      rewardAmount: rewardAmount.toString() 
+    }).where(eq(quests.id, questId)).returning();
+
     await db.update(userBalances).set({
-      questEarnings: (Number(balance.questEarnings) + Number(quest.rewardAmount)).toString()
+      questEarnings: (Number(balance.questEarnings) + rewardAmount).toString()
     }).where(eq(userBalances.userId, userId));
 
     return updated;
@@ -188,11 +198,25 @@ export class DatabaseStorage implements IStorage {
 
   private async generateDailyQuests(userId: string) {
     const [balance] = await db.select().from(userBalances).where(eq(userBalances.userId, userId));
-    const base = Number(balance?.mainBalance) || 10000;
-    const reward = base * 0.35;
+    const mainBalance = Number(balance?.mainBalance) || 0;
+    
+    // Reward is calculated at completion time, but we set a preview reward of 20%
+    const reward = mainBalance * 0.20;
     const types = ['video', 'quiz', 'link', 'referral'] as const;
+    const descriptions = {
+      video: "Regarder la vidéo de formation",
+      quiz: "Répondre au quiz quotidien",
+      link: "Visiter le partenaire financier",
+      referral: "Partager votre lien d'invitation"
+    };
+
     for (const type of types) {
-      await db.insert(quests).values({ userId, type, description: `Task: ${type}`, rewardAmount: reward.toString() });
+      await db.insert(quests).values({ 
+        userId, 
+        type, 
+        description: descriptions[type], 
+        rewardAmount: reward.toString() 
+      });
     }
   }
 

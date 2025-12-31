@@ -16,7 +16,7 @@ export const userBalances = pgTable("user_balances", {
   mainBalance: numeric("main_balance").notNull().default("0"),
   lockedBonus: numeric("locked_bonus").notNull().default("0"),
   questEarnings: numeric("quest_earnings").notNull().default("0"),
-  investmentTier: integer("investment_tier").notNull().default(0),
+  investmentTier: numeric("investment_tier").notNull().default("0"), // Changed to numeric to match investment balance
   lastDailyReset: timestamp("last_daily_reset").defaultNow(),
   role: text("role").notNull().default("user"),
 });
