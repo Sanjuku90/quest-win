@@ -1,5 +1,5 @@
 entrypoint = "main.py"
-modules = ["python-3.11", "nodejs-20"]
+modules = ["nodejs-20", "web"]
 
 [nix]
 channel = "stable-25_05"
@@ -12,8 +12,9 @@ language = "python3"
 requiredFiles = [".replit", "replit.nix"]
 
 [deployment]
-run = ["npm", "start"]
+run = ["node", "./dist/index.cjs"]
 deploymentTarget = "autoscale"
+build = ["npm", "run", "build"]
 
 [agent]
 expertMode = true
@@ -29,10 +30,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "dev-server"
+args = "Start application"
 
 [[workflows.workflow]]
-name = "dev-server"
+name = "Start application"
 author = "agent"
 
 [[workflows.workflow.tasks]]
