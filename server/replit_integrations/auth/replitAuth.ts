@@ -2,17 +2,17 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
-import connectPg from "connect-pg-simple";
+import connectSqlite from "connect-sqlite3";
 import { authStorage } from "./storage";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
+  const SQLiteStore = connectSqlite(session);
+  const sessionStore = new SQLiteStore({
+    db: "sqlite.db",
+    dir: ".",
+    table: "sessions",
+    concurrentDB: true
   });
   return session({
     secret: process.env.SESSION_SECRET!,

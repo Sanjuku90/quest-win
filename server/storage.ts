@@ -41,7 +41,7 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return updated;
     }
-    const [inserted] = await db.insert(users).values(userData).returning();
+    const [inserted] = await db.insert(users).values(userData as any).returning();
     return inserted;
   }
 
