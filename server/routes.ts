@@ -20,6 +20,7 @@ export async function registerRoutes(
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const userId = req.user.id;
     const balance = await storage.getUserBalance(userId);
+    console.log("Admin check for user:", userId, "Role:", balance.role);
     if (balance.role !== 'admin') return res.status(403).json({ message: "Admin only" });
     next();
   };
