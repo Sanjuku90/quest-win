@@ -1,47 +1,51 @@
-import { pgTable, text, serial, integer, boolean, timestamp, numeric } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Re-export auth models
-export * from "./models/auth";
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(), // Replit Auth ID
+  email: text("email").unique(),
+  password: text("password"),
+  username: text("username"),
+  firstName: text("firstName"),
+  lastName: text("lastName"),
+  profileImageUrl: text("profileImageUrl"),
+  createdAt: integer("created_at", { mode: 'timestamp' }).default(new Date()),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).default(new Date()),
+});
 
-// Import auth models for relations
-import { users } from "./models/auth";
-
-// === TABLE DEFINITIONS ===
-export const userBalances = pgTable("user_balances", {
-  id: serial("id").primaryKey(),
+export const userBalances = sqliteTable("user_balances", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: text("user_id").notNull().references(() => users.id),
-  mainBalance: numeric("main_balance").notNull().default("0"),
-  lockedBonus: numeric("locked_bonus").notNull().default("0"),
-  questEarnings: numeric("quest_earnings").notNull().default("0"),
-  investmentTier: numeric("investment_tier").notNull().default("0"), // Changed to numeric to match investment balance
-  lastDailyReset: timestamp("last_daily_reset").defaultNow(),
+  mainBalance: text("main_balance").notNull().default("0"),
+  lockedBonus: text("locked_bonus").notNull().default("0"),
+  questEarnings: text("quest_earnings").notNull().default("0"),
+  investmentTier: text("investment_tier").notNull().default("0"),
+  lastDailyReset: integer("last_daily_reset", { mode: 'timestamp' }).default(new Date()),
   role: text("role").notNull().default("user"),
 });
 
-export const quests = pgTable("quests", {
-  id: serial("id").primaryKey(),
+export const quests = sqliteTable("quests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: text("user_id").notNull().references(() => users.id),
   type: text("type").notNull(),
   description: text("description").notNull(),
-  rewardAmount: numeric("reward_amount").notNull(),
-  isCompleted: boolean("is_completed").default(false),
-  completedAt: timestamp("completed_at"),
-  createdAt: timestamp("created_at").defaultNow(),
+  rewardAmount: text("reward_amount").notNull(),
+  isCompleted: integer("is_completed", { mode: 'boolean' }).default(false),
+  completedAt: integer("completed_at", { mode: 'timestamp' }),
+  createdAt: integer("created_at", { mode: 'timestamp' }).default(new Date()),
 });
 
-export const transactions = pgTable("transactions", {
-  id: serial("id").primaryKey(),
+export const transactions = sqliteTable("transactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: text("user_id").notNull().references(() => users.id),
   type: text("type").notNull(),
-  amount: numeric("amount").notNull(),
-  status: text("status").default("completed"),
-  createdAt: timestamp("created_at").defaultNow(),
+  amount: text("amount").notNull(),
+  status: text("status").default("pending"),
+  createdAt: integer("created_at", { mode: 'timestamp' }).default(new Date()),
 });
 
-// === RELATIONS ===
 export const usersRelations = relations(users, ({ one, many }) => ({
   balance: one(userBalances, {
     fields: [users.id],
@@ -72,7 +76,6 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   }),
 }));
 
-// === SCHEMAS ===
 export const insertQuestSchema = createInsertSchema(quests).omit({ 
   id: true, 
   createdAt: true, 
@@ -84,11 +87,17 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   createdAt: true 
 });
 
-// === EXPLICIT API CONTRACT TYPES ===
-
 export type Quest = typeof quests.$inferSelect;
 export type UserBalance = typeof userBalances.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type UpsertUser = typeof users.$inferInsert;
+
+export type RouletteResultResponse = {
+  won: boolean;
+  amount: number;
+  newBalance: UserBalance;
+};
 
 export type CompleteQuestRequest = { questId: number };
 export type PlayRouletteRequest = { betAmount: number };
@@ -102,11 +111,3 @@ export type DashboardStatsResponse = {
   totalQuestsCount: number;
   nextResetTime: string;
 };
-
-export type RouletteResultResponse = {
-  won: boolean;
-  amount: number;
-  newBalance: UserBalance;
-};
-
-export type UpsertUser = typeof users.$inferInsert;

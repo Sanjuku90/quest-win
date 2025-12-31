@@ -6,7 +6,7 @@ import {
   type RouletteResultResponse
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, ne } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { authStorage, type IAuthStorage } from "./replit_integrations/auth/storage";
 
 export interface IStorage extends IAuthStorage {
@@ -33,18 +33,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
+    const [existing] = await db.select().from(users).where(eq(users.id, userData.id!));
+    if (existing) {
+      const [updated] = await db.update(users)
+        .set({ ...userData, updatedAt: new Date() })
+        .where(eq(users.id, userData.id!))
+        .returning();
+      return updated;
+    }
+    const [inserted] = await db.insert(users).values(userData).returning();
+    return inserted;
   }
 
   async getUserBalance(userId: string): Promise<UserBalance> {
@@ -119,8 +117,7 @@ export class DatabaseStorage implements IStorage {
     .where(eq(transactions.status, "pending"))
     .orderBy(desc(transactions.createdAt));
 
-    console.log("Pending transactions found:", results.length);
-    return results.map(r => ({ ...r.tx, userEmail: r.email }));
+    return results.map(r => ({ ...r.tx, userEmail: r.email! }));
   }
 
   async handleTransactionApproval(txId: number, action: "approve" | "reject"): Promise<void> {
@@ -133,11 +130,9 @@ export class DatabaseStorage implements IStorage {
       return;
     }
 
-    // Approve logic
     const userId = tx.userId;
     const amount = Number(tx.amount);
     
-    // Use a transaction to ensure atomicity
     await db.transaction(async (tx_db) => {
       const [balance] = await tx_db.select().from(userBalances).where(eq(userBalances.userId, userId));
       if (!balance) throw new Error("Balance not found");
@@ -185,7 +180,6 @@ export class DatabaseStorage implements IStorage {
     const [quest] = await db.select().from(quests).where(and(eq(quests.id, questId), eq(quests.userId, userId)));
     if (!quest || quest.isCompleted) throw new Error("Quête non trouvée ou déjà complétée");
 
-    // Chaque quête rapporte 20% du solde d'investissement (mainBalance)
     const rewardAmount = mainBalance * 0.20;
 
     const [updated] = await db.update(quests).set({ 
@@ -205,7 +199,6 @@ export class DatabaseStorage implements IStorage {
     const [balance] = await db.select().from(userBalances).where(eq(userBalances.userId, userId));
     const mainBalance = Number(balance?.mainBalance) || 0;
     
-    // Reward is calculated at completion time, but we set a preview reward of 20%
     const reward = mainBalance * 0.20;
     const types = ['video', 'quiz', 'link', 'referral'] as const;
     const descriptions = {
