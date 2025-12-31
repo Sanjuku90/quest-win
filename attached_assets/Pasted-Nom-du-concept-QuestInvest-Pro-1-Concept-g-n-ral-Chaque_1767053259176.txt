@@ -1,0 +1,64 @@
+Nom du concept : QuestInvest Pro
+
+1️⃣ Concept général
+	•	Chaque utilisateur peut investir de l’argent sur la plateforme.
+	•	Il reçoit un bonus de 40% sur son premier dépôt.
+	•	Ce bonus devient retirable uniquement après avoir joué à un mini-jeu de roulette et gagné.
+	•	Les quêtes quotidiennes rapportent 35% du solde d’investissement par quête complétée.
+	•	Les utilisateurs ont 4 quêtes de base par jour, pouvant augmenter selon le montant investi.
+
+⸻
+
+2️⃣ Fonctionnement des quêtes
+	•	Quêtes journalières (minimum 4) :
+	1.	Visionner une vidéo sponsorisée
+	2.	Répondre à un quiz ou mini-test
+	3.	Tâche rapide (clic sur un lien, like, abonnement)
+	4.	Parrainage / inviter un ami
+	•	Bonus de quêtes :
+	•	Plus l’investissement est élevé, plus le nombre de quêtes supplémentaires est important.
+	•	Chaque quête accomplie → 35% du solde d’investissement en gain.
+
+Exemple :
+	•	Investissement : 10 000 XOF → 4 quêtes → chaque quête = 3 500 XOF
+	•	Investissement : 20 000 XOF → 6 quêtes → chaque quête = 7 000 XOF
+
+⸻
+
+3️⃣ Mini-jeu roulette
+	•	L’utilisateur peut jouer pour débloquer son bonus de premier dépôt (40%).
+	•	Fonctionnement :
+	•	Mise = bonus
+	•	Si gagné → bonus transféré dans le wallet et disponible pour retrait
+	•	Si perdu → bonus peut rester bloqué ou l’utilisateur peut retenter après certaines conditions (ex : accomplir X quêtes)
+
+Avantage : rend le site amusant et addictif.
+
+⸻
+
+4️⃣ Dashboard & gamification
+	•	Barre de progression pour les quêtes complétées
+	•	Wallet affichant : solde principal, gains de quêtes, bonus verrouillé
+	•	Badges et niveaux : Bronze / Silver / Gold / Platinum
+	•	Classement des meilleurs joueurs / investisseurs
+
+⸻
+
+5️⃣ Retraits
+	•	Retrait possible du solde réel + gains des quêtes
+	•	Bonus de premier dépôt → retrait uniquement après roulette
+	•	Option : retrait minimum configurable (ex : 1 000 XOF)
+
+⸻
+
+6️⃣ Monétisation
+	•	Investissements initiaux → plus d’opportunités de gains
+	•	Parrainage → bonus supplémentaires
+	•	Publicités sponsorisées → financement des quêtes
+
+⸻
+
+7️⃣ Points forts
+	•	Professionnel : interface claire, wallet, dashboard, historique
+	•	Amusant : mini-jeu roulette + quêtes gamifiées
+	•	Attractif : rendement élevé (35% par quête !) et bonus premier dépôt
