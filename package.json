@@ -7,7 +7,7 @@
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
-    "render-build": "rm -rf pyproject.toml poetry.lock .python-version && npm install && npm run build && npm run db:push -- --force",
+    "render-build": "npm install && npm run build",
     "check": "tsc",
     "db:push": "drizzle-kit push"
   },
